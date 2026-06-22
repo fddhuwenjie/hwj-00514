@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>保洁员工作台</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body {
+      background: #f5f7fa;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    
+    .mobile-app {
+      max-width: 480px;
+      margin: 0 auto;
+      min-height: 100vh;
+      background: #f5f7fa;
+    }
+    
+    .mobile-header {
+      background: #3498db;
+      color: #fff;
+      padding: 15px 20px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    
+    .mobile-header h1 {
+      font-size: 18px;
+      margin: 0;
+    }
+    
+    .mobile-header .sub {
+      font-size: 12px;
+      opacity: 0.9;
+      margin-top: 3px;
+    }
+    
+    .cleaner-select {
+      padding: 15px;
+      background: #fff;
+      margin-bottom: 10px;
+    }
+    
+    .cleaner-select select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    
+    .task-tabs {
+      display: flex;
+      background: #fff;
+      margin-bottom: 10px;
+    }
+    
+    .task-tab {
+      flex: 1;
+      padding: 12px;
+      text-align: center;
+      font-size: 14px;
+      color: #666;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+    }
+    
+    .task-tab.active {
+      color: #3498db;
+      border-bottom-color: #3498db;
+      font-weight: 500;
+    }
+    
+    .task-list {
+      padding: 0 10px;
+    }
+    
+    .task-card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 10px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .task-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    
+    .task-room {
+      font-size: 16px;
+      font-weight: bold;
+      color: #333;
+    }
+    
+    .task-status {
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+    }
+    
+    .task-status.pending {
+      background: #fff3e0;
+      color: #e65100;
+    }
+    
+    .task-status.in_progress {
+      background: #e3f2fd;
+      color: #0d47a1;
+    }
+    
+    .task-status.completed {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+    
+    .task-info {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 8px;
+    }
+    
+    .task-time {
+      font-size: 12px;
+      color: #999;
+    }
+    
+    .task-overdue {
+      color: #e74c3c;
+      font-weight: 500;
+    }
+    
+    .task-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #f0f0f0;
+    }
+    
+    .task-btn {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    
+    .task-btn.primary {
+      background: #3498db;
+      color: #fff;
+    }
+    
+    .task-btn.success {
+      background: #2ecc71;
+      color: #fff;
+    }
+    
+    .task-btn.warning {
+      background: #f39c12;
+      color: #fff;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #999;
+    }
+    
+    .empty-icon {
+      font-size: 48px;
+      margin-bottom: 10px;
+    }
+    
+    .detail-form {
+      padding: 20px;
+    }
+    
+    .detail-form label {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 14px;
+      color: #333;
+      font-weight: 500;
+    }
+    
+    .detail-form input,
+    .detail-form textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 15px;
+    }
+    
+    .detail-form textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+    
+    .btn-submit {
+      width: 100%;
+      padding: 14px;
+      background: #2ecc71;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    
+    .btn-back {
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 24px;
+      cursor: pointer;
+      padding: 0;
+      margin-right: 10px;
+    }
+    
+    .header-with-back {
+      display: flex;
+      align-items: center;
+    }
+    
+    .stats-bar {
+      display: flex;
+      background: #fff;
+      padding: 15px;
+      margin-bottom: 10px;
+    }
+    
+    .stat-item {
+      flex: 1;
+      text-align: center;
+    }
+    
+    .stat-number {
+      font-size: 24px;
+      font-weight: bold;
+      color: #333;
+    }
+    
+    .stat-label {
+      font-size: 12px;
+      color: #999;
+      margin-top: 3px;
+    }
+    
+    .stat-item.pending .stat-number { color: #f39c12; }
+    .stat-item.progress .stat-number { color: #3498db; }
+    .stat-item.completed .stat-number { color: #2ecc71; }
+  </style>
+</head>
+<body>
+  <div class="mobile-app">
+    <div class="mobile-header">
+      <div id="header-content">
+        <h1>保洁员工作台</h1>
+        <div class="sub">清洁任务管理</div>
+      </div>
+    </div>
+
+    <div id="page-list">
+      <div class="cleaner-select">
+        <label style="font-size: 13px; color: #666; margin-bottom: 8px; display: block;">选择保洁员</label>
+        <select id="cleaner-select" onchange="loadTasks()">
+          <option value="">请选择保洁员</option>
+        </select>
+      </div>
+
+      <div class="stats-bar">
+        <div class="stat-item pending">
+          <div class="stat-number" id="stat-pending">0</div>
+          <div class="stat-label">待开始</div>
+        </div>
+        <div class="stat-item progress">
+          <div class="stat-number" id="stat-progress">0</div>
+          <div class="stat-label">进行中</div>
+        </div>
+        <div class="stat-item completed">
+          <div class="stat-number" id="stat-completed">0</div>
+          <div class="stat-label">已完成</div>
+        </div>
+      </div>
+
+      <div class="task-tabs">
+        <div class="task-tab active" data-status="all" onclick="filterTasks('all')">全部</div>
+        <div class="task-tab" data-status="pending" onclick="filterTasks('pending')">待开始</div>
+        <div class="task-tab" data-status="in_progress" onclick="filterTasks('in_progress')">进行中</div>
+        <div class="task-tab" data-status="completed" onclick="filterTasks('completed')">已完成</div>
+      </div>
+
+      <div class="task-list" id="task-list"></div>
+    </div>
+
+    <div id="page-detail" style="display: none;">
+      <div class="mobile-header">
+        <div class="header-with-back">
+          <button class="btn-back" onclick="goBack()">&#8249;</button>
+          <div>
+            <h1 id="detail-title">清洁详情</h1>
+            <div class="sub" id="detail-sub">房间清洁</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="detail-form">
+        <div class="task-card" style="margin-bottom: 20px;">
+          <div class="task-info" id="detail-room"><strong>房间: </strong></div>
+          <div class="task-info" id="detail-scheduled"><strong>计划时间: </strong></div>
+          <div class="task-info" id="detail-started"><strong>开始时间: </strong></div>
+        </div>
+
+        <div id="complete-form">
+          <label>照片URL</label>
+          <input type="text" id="photo-url" placeholder="请输入照片链接">
+          
+          <label>异常情况</label>
+          <textarea id="exception" placeholder="如有异常请在此填写..."></textarea>
+          
+          <button class="btn-submit" onclick="submitComplete()">提交完成</button>
+        </div>
+
+        <div id="start-action" style="display: none;">
+          <button class="btn-submit" style="background: #3498db;" onclick="startTask()">开始清洁</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    const API_BASE = 'http://localhost:8514/api';
+    let currentCleanerId = null;
+    let currentFilter = 'all';
+    let allTasks = [];
+    let currentTaskId = null;
+
+    async function init() {
+      await loadCleaners();
+    }
+
+    async function loadCleaners() {
+      try {
+        const response = await fetch(`${API_BASE}/cleaners`);
+        const data = await response.json();
+        
+        if (data.success) {
+          const select = document.getElementById('cleaner-select');
+          data.data.forEach(cleaner => {
+            const option = document.createElement('option');
+            option.value = cleaner.id;
+            option.textContent = cleaner.name;
+            select.appendChild(option);
+          });
+          
+          if (data.data.length > 0) {
+            select.value = data.data[0].id;
+            currentCleanerId = data.data[0].id;
+            loadTasks();
+          }
+        }
+      } catch (err) {
+        console.error('加载保洁员失败:', err);
+      }
+    }
+
+    async function loadTasks() {
+      const select = document.getElementById('cleaner-select');
+      currentCleanerId = select.value;
+      
+      if (!currentCleanerId) {
+        document.getElementById('task-list').innerHTML = '<div class="empty-state"><div class="empty-icon">👷</div><p>请选择保洁员</p></div>';
+        return;
+      }
+      
+      try {
+        const response = await fetch(`${API_BASE}/cleaning/cleaner/${currentCleanerId}/tasks`);
+        const data = await response.json();
+        
+        if (data.success) {
+          allTasks = data.data;
+          updateStats();
+          renderTasks();
+        }
+      } catch (err) {
+        console.error('加载任务失败:', err);
+      }
+    }
+
+    function updateStats() {
+      const pending = allTasks.filter(t => t.status === 'pending').length;
+      const progress = allTasks.filter(t => t.status === 'in_progress').length;
+      const completed = allTasks.filter(t => t.status === 'completed').length;
+      
+      document.getElementById('stat-pending').textContent = pending;
+      document.getElementById('stat-progress').textContent = progress;
+      document.getElementById('stat-completed').textContent = completed;
+    }
+
+    function filterTasks(status) {
+      currentFilter = status;
+      
+      document.querySelectorAll('.task-tab').forEach(tab => {
+        tab.classList.remove('active');
+        if (tab.dataset.status === status) {
+          tab.classList.add('active');
+        }
+      });
+      
+      renderTasks();
+    }
+
+    function renderTasks() {
+      let tasks = allTasks;
+      
+      if (currentFilter !== 'all') {
+        tasks = allTasks.filter(t => t.status === currentFilter);
+      }
+      
+      const container = document.getElementById('task-list');
+      
+      if (tasks.length === 0) {
+        container.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><p>暂无任务</p></div>';
+        return;
+      }
+      
+      container.innerHTML = tasks.map(task => {
+        const isOverdue = task.is_overdue === 1;
+        const statusText = getStatusText(task.status);
+        
+        return `
+          <div class="task-card" onclick="showDetail(${task.id})">
+            <div class="task-card-header">
+              <span class="task-room">${task.room_number} - ${task.room_type}</span>
+              <span class="task-status ${task.status}">${statusText}</span>
+            </div>
+            <div class="task-time">
+              计划: ${task.scheduled_time || '-'}
+              ${isOverdue ? '<span class="task-overdue"> (已超时)</span>' : ''}
+            </div>
+            <div class="task-actions" onclick="event.stopPropagation()">
+              ${task.status === 'pending' ? `
+                <button class="task-btn primary" onclick="startTaskDirect(${task.id})">开始</button>
+              ` : ''}
+              ${task.status === 'in_progress' ? `
+                <button class="task-btn success" onclick="showDetail(${task.id})">完成</button>
+              ` : ''}
+              ${task.status === 'completed' ? `
+                <button class="task-btn" style="background: #f0f0f0; color: #999;">已完成</button>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function getStatusText(status) {
+      const map = {
+        pending: '待开始',
+        in_progress: '进行中',
+        completed: '已完成'
+      };
+      return map[status] || status;
+    }
+
+    function showDetail(taskId) {
+      currentTaskId = taskId;
+      const task = allTasks.find(t => t.id === taskId);
+      
+      if (!task) return;
+      
+      document.getElementById('detail-title').textContent = task.room_number;
+      document.getElementById('detail-sub').textContent = task.room_type;
+      document.getElementById('detail-room').innerHTML = `<strong>房间: </strong>${task.room_number} - ${task.room_type}`;
+      document.getElementById('detail-scheduled').innerHTML = `<strong>计划时间: </strong>${task.scheduled_time || '-'}`;
+      document.getElementById('detail-started').innerHTML = `<strong>开始时间: </strong>${task.started_at || '-'}`;
+      
+      const completeForm = document.getElementById('complete-form');
+      const startAction = document.getElementById('start-action');
+      
+      if (task.status === 'pending') {
+        completeForm.style.display = 'none';
+        startAction.style.display = 'block';
+      } else if (task.status === 'in_progress') {
+        completeForm.style.display = 'block';
+        startAction.style.display = 'none';
+      } else {
+        completeForm.style.display = 'none';
+        startAction.style.display = 'none';
+      }
+      
+      document.getElementById('photo-url').value = task.photo_url || '';
+      document.getElementById('exception').value = task.exception || '';
+      
+      document.getElementById('page-list').style.display = 'none';
+      document.getElementById('page-detail').style.display = 'block';
+    }
+
+    function goBack() {
+      document.getElementById('page-list').style.display = 'block';
+      document.getElementById('page-detail').style.display = 'none';
+      loadTasks();
+    }
+
+    async function startTaskDirect(taskId) {
+      if (!confirm('确定要开始清洁吗？')) return;
+      
+      try {
+        const response = await fetch(`${API_BASE}/cleaning/${taskId}/start`, {
+          method: 'POST'
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+          showToast('开始清洁', 'success');
+          loadTasks();
+        } else {
+          showToast(data.message || '操作失败', 'error');
+        }
+      } catch (err) {
+        showToast('网络错误', 'error');
+      }
+    }
+
+    async function startTask() {
+      if (!currentTaskId) return;
+      
+      if (!confirm('确定要开始清洁吗？')) return;
+      
+      try {
+        const response = await fetch(`${API_BASE}/cleaning/${currentTaskId}/start`, {
+          method: 'POST'
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+          showToast('开始清洁', 'success');
+          const task = allTasks.find(t => t.id === currentTaskId);
+          if (task) {
+            task.status = 'in_progress';
+          }
+          showDetail(currentTaskId);
+        } else {
+          showToast(data.message || '操作失败', 'error');
+        }
+      } catch (err) {
+        showToast('网络错误', 'error');
+      }
+    }
+
+    async function submitComplete() {
+      if (!currentTaskId) return;
+      
+      const photoUrl = document.getElementById('photo-url').value;
+      const exception = document.getElementById('exception').value;
+      
+      if (!confirm('确定要提交完成吗？')) return;
+      
+      try {
+        const response = await fetch(`${API_BASE}/cleaning/${currentTaskId}/complete`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            photo_url: photoUrl,
+            exception: exception
+          })
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+          showToast('清洁完成', 'success');
+          goBack();
+        } else {
+          showToast(data.message || '操作失败', 'error');
+        }
+      } catch (err) {
+        showToast('网络错误', 'error');
+      }
+    }
+
+    function showToast(message, type = 'info') {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = `toast ${type} show`;
+      setTimeout(() => {
+        toast.className = `toast ${type}`;
+      }, 3000);
+    }
+
+    init();
+  </script>
+</body>
+</html>

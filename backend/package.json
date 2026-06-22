@@ -1,0 +1,17 @@
+{
+  "name": "homestay-management-backend",
+  "version": "1.0.0",
+  "description": "民宿房态、预订和清洁排班管理系统后端",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "better-sqlite3": "^9.2.2",
+    "cors": "^2.8.5",
+    "body-parser": "^1.20.2",
+    "moment": "^2.29.4"
+  }
+}

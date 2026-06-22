@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>民宿管理系统</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app-container">
+    <aside class="sidebar">
+      <div class="logo">
+        <h2>🏠 民宿管家</h2>
+      </div>
+      <nav class="nav-menu">
+        <a href="#" class="nav-item active" data-page="dashboard">
+          <span class="nav-icon">📊</span>
+          <span>首页概览</span>
+        </a>
+        <a href="#" class="nav-item" data-page="rooms">
+          <span class="nav-icon">🛏️</span>
+          <span>房源管理</span>
+        </a>
+        <a href="#" class="nav-item" data-page="bookings">
+          <span class="nav-icon">📝</span>
+          <span>预订管理</span>
+        </a>
+        <a href="#" class="nav-item" data-page="checkin">
+          <span class="nav-icon">🔑</span>
+          <span>入住退房</span>
+        </a>
+        <a href="#" class="nav-item" data-page="cleaning">
+          <span class="nav-icon">🧹</span>
+          <span>清洁排班</span>
+        </a>
+        <a href="#" class="nav-item" data-page="maintenance">
+          <span class="nav-icon">🔧</span>
+          <span>维修停房</span>
+        </a>
+        <a href="#" class="nav-item" data-page="stats">
+          <span class="nav-icon">📈</span>
+          <span>统计报表</span>
+        </a>
+        <a href="#" class="nav-item" data-page="calendar">
+          <span class="nav-icon">📅</span>
+          <span>房态日历</span>
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <p style="font-size: 12px; color: #999;">保洁员移动端: <a href="/cleaner-mobile" target="_blank" style="color: #4a90d9;">点击进入</a></p>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="top-header">
+        <h1 id="page-title">首页概览</h1>
+        <div class="header-actions">
+          <span id="current-date"></span>
+        </div>
+      </header>
+
+      <div class="page-content">
+        <div id="page-dashboard" class="page active">
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon" style="background: #e3f2fd;">🏠</div>
+              <div class="stat-info">
+                <h3 id="stat-total-rooms">0</h3>
+                <p>总房间数</p>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon" style="background: #e8f5e9;">✅</div>
+              <div class="stat-info">
+                <h3 id="stat-available-rooms">0</h3>
+                <p>可订房间</p>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon" style="background: #fff3e0;">🛏️</div>
+              <div class="stat-info">
+                <h3 id="stat-occupied-rooms">0</h3>
+                <p>在住房间</p>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon" style="background: #fce4ec;">🧹</div>
+              <div class="stat-info">
+                <h3 id="stat-cleaning-rooms">0</h3>
+                <p>待清洁</p>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon" style="background: #f3e5f5;">🔧</div>
+              <div class="stat-info">
+                <h3 id="stat-maintenance-rooms">0</h3>
+                <p>维修中</p>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon" style="background: #e0f7fa;">💰</div>
+              <div class="stat-info">
+                <h3 id="stat-month-revenue">¥0</h3>
+                <p>本月营收</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="dashboard-row">
+            <div class="dashboard-card">
+              <h3>今日入住/退房</h3>
+              <div class="today-stats">
+                <div class="today-item checkin">
+                  <span class="today-number" id="today-checkins">0</span>
+                  <span>今日入住</span>
+                </div>
+                <div class="today-item checkout">
+                  <span class="today-number" id="today-checkouts">0</span>
+                  <span>今日退房</span>
+                </div>
+                <div class="today-item inhouse">
+                  <span class="today-number" id="in-house-guests">0</span>
+                  <span>在住客人</span>
+                </div>
+              </div>
+            </div>
+            <div class="dashboard-card">
+              <h3>待处理事项</h3>
+              <ul class="todo-list">
+                <li><span class="badge warning" id="pending-cleanings">0</span> 待清洁任务</li>
+                <li><span class="badge danger" id="pending-maintenance">0</span> 待处理维修</li>
+                <li><span class="badge info" id="pending-bookings">0</span> 待确认订单</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="dashboard-card">
+            <h3>快速操作</h3>
+            <div class="quick-actions">
+              <button class="btn btn-primary" onclick="showAddBookingModal()">➕ 新建预订</button>
+              <button class="btn btn-success" onclick="navigateTo('checkin')">🔑 办理入住</button>
+              <button class="btn btn-warning" onclick="navigateTo('cleaning')">🧹 清洁排班</button>
+              <button class="btn btn-info" onclick="navigateTo('calendar')">📅 房态日历</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="page-rooms" class="page">
+          <div class="page-toolbar">
+            <div class="filter-group">
+              <select id="room-status-filter" onchange="loadRooms()">
+                <option value="">全部状态</option>
+                <option value="available">可订</option>
+                <option value="occupied">入住中</option>
+                <option value="cleaning">待清洁</option>
+                <option value="maintenance">维修中</option>
+                <option value="out_of_service">停用</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" onclick="showAddRoomModal()">➕ 添加房间</button>
+          </div>
+          <div class="room-grid" id="room-grid"></div>
+        </div>
+
+        <div id="page-bookings" class="page">
+          <div class="page-toolbar">
+            <div class="filter-group">
+              <select id="booking-status-filter" onchange="loadBookings()">
+                <option value="">全部状态</option>
+                <option value="pending">待确认</option>
+                <option value="confirmed">已确认</option>
+                <option value="checked_in">入住中</option>
+                <option value="checked_out">已离店</option>
+                <option value="cancelled">已取消</option>
+              </select>
+              <select id="booking-channel-filter" onchange="loadBookings()">
+                <option value="">全部渠道</option>
+                <option value="direct">自营</option>
+                <option value="ctrip">携程</option>
+                <option value="meituan">美团</option>
+                <option value="phone">电话</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" onclick="showAddBookingModal()">➕ 新建预订</button>
+          </div>
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>订单号</th>
+                  <th>入住人</th>
+                  <th>房间</th>
+                  <th>入住日期</th>
+                  <th>离店日期</th>
+                  <th>渠道</th>
+                  <th>金额</th>
+                  <th>状态</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="bookings-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="page-checkin" class="page">
+          <div class="checkin-tabs">
+            <button class="tab-btn active" data-tab="checkins" onclick="switchCheckinTab('checkins')">今日入住</button>
+            <button class="tab-btn" data-tab="checkouts" onclick="switchCheckinTab('checkouts')">今日退房</button>
+            <button class="tab-btn" data-tab="inhouse" onclick="switchCheckinTab('inhouse')">在住客人</button>
+          </div>
+
+          <div id="tab-checkins" class="tab-content active">
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>订单号</th>
+                    <th>入住人</th>
+                    <th>房间</th>
+                    <th>房型</th>
+                    <th>联系方式</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody id="checkins-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div id="tab-checkouts" class="tab-content">
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>订单号</th>
+                    <th>入住人</th>
+                    <th>房间</th>
+                    <th>房型</th>
+                    <th>入住日期</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody id="checkouts-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div id="tab-inhouse" class="tab-content">
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>订单号</th>
+                    <th>入住人</th>
+                    <th>房间</th>
+                    <th>房型</th>
+                    <th>入住日期</th>
+                    <th>离店日期</th>
+                    <th>证件后四位</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody id="inhouse-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div id="page-cleaning" class="page">
+          <div class="page-toolbar">
+            <div class="filter-group">
+              <select id="cleaning-status-filter" onchange="loadCleaningTasks()">
+                <option value="">全部状态</option>
+                <option value="pending">待分配</option>
+                <option value="in_progress">清洁中</option>
+                <option value="completed">已完成</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" onclick="showAddCleaningModal()">➕ 添加清洁任务</button>
+          </div>
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>房间</th>
+                  <th>保洁员</th>
+                  <th>计划时间</th>
+                  <th>开始时间</th>
+                  <th>完成时间</th>
+                  <th>状态</th>
+                  <th>超时</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="cleaning-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="page-maintenance" class="page">
+          <div class="page-toolbar">
+            <div class="filter-group">
+              <select id="maintenance-status-filter" onchange="loadMaintenance()">
+                <option value="">全部状态</option>
+                <option value="pending">待处理</option>
+                <option value="in_progress">维修中</option>
+                <option value="completed">已完成</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" onclick="showAddMaintenanceModal()">➕ 创建维修单</button>
+          </div>
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>房间</th>
+                  <th>标题</th>
+                  <th>描述</th>
+                  <th>开始日期</th>
+                  <th>结束日期</th>
+                  <th>状态</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="maintenance-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="page-stats" class="page">
+          <div class="stats-page">
+            <div class="stats-card">
+              <h3>入住率 & RevPAR</h3>
+              <div class="stat-big">
+                <div>
+                  <span class="stat-value" id="occupancy-rate">0%</span>
+                  <span class="stat-label">入住率</span>
+                </div>
+                <div>
+                  <span class="stat-value" id="revpar">¥0</span>
+                  <span class="stat-label">RevPAR</span>
+                </div>
+                <div>
+                  <span class="stat-value" id="adr">¥0</span>
+                  <span class="stat-label">ADR</span>
+                </div>
+              </div>
+              <div class="stat-detail">
+                <p>统计周期: <span id="stats-period">-</span></p>
+                <p>总房晚: <span id="total-room-nights">0</span></p>
+                <p>总收入: <span id="total-revenue">¥0</span></p>
+              </div>
+            </div>
+
+            <div class="stats-card">
+              <h3>渠道订单占比</h3>
+              <div id="channel-stats">
+                <div class="channel-item">
+                  <span class="channel-name">自营</span>
+                  <div class="channel-bar"><div class="channel-fill" style="width: 0%"></div></div>
+                  <span class="channel-count">0单</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="stats-card">
+              <h3>保洁工作量</h3>
+              <div id="cleaner-stats" class="cleaner-list"></div>
+            </div>
+
+            <div class="stats-card">
+              <h3>维修停房统计</h3>
+              <div class="stat-big">
+                <div>
+                  <span class="stat-value" id="maintenance-days">0</span>
+                  <span class="stat-label">停房天数</span>
+                </div>
+                <div>
+                  <span class="stat-value" id="maintenance-count">0</span>
+                  <span class="stat-label">维修单数</span>
+                </div>
+              </div>
+              <div id="maintenance-stats"></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="page-calendar" class="page">
+          <div class="page-toolbar">
+            <div class="filter-group">
+              <button class="btn btn-default" onclick="changeCalendarWeek(-1)">◀ 上一周</button>
+              <button class="btn btn-default" onclick="changeCalendarWeek(1)">下一周 ▶</button>
+              <button class="btn btn-primary" onclick="goToToday()">今天</button>
+            </div>
+            <span id="calendar-date-range" style="font-weight: bold;"></span>
+          </div>
+          <div class="legend-bar">
+            <span class="legend-item"><span class="legend-color available"></span> 可订</span>
+            <span class="legend-item"><span class="legend-color booked"></span> 已预订</span>
+            <span class="legend-item"><span class="legend-color occupied"></span> 入住中</span>
+            <span class="legend-item"><span class="legend-color cleaning"></span> 待清洁</span>
+            <span class="legend-item"><span class="legend-color maintenance"></span> 维修中</span>
+            <span class="legend-item"><span class="legend-color out_of_service"></span> 停用</span>
+          </div>
+          <div class="calendar-container">
+            <div class="calendar-table" id="calendar-table"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modal-title">标题</h3>
+        <button class="close-btn" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

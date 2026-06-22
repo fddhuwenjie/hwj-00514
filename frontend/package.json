@@ -1,0 +1,12 @@
+{
+  "name": "homestay-management-frontend",
+  "version": "1.0.0",
+  "description": "民宿管理系统前端",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
