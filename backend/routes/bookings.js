@@ -143,7 +143,7 @@ router.post('/check-conflict', (req, res) => {
     const maintenanceConflicts = checkMaintenanceConflict(room_id, checkin_date, checkout_date);
     const room = db.prepare('SELECT status FROM rooms WHERE id = ?').get(room_id);
     
-    const hasConflict = bookingConflicts.length > 0 || maintenanceConflicts.length > 0 || (room && room.status !== 'available');
+    const hasConflict = bookingConflicts.length > 0 || maintenanceConflicts.length > 0 || (room && room.status === 'out_of_service');
     const price = calculatePrice(room_id, checkin_date, checkout_date);
     const nights = moment(checkout_date).diff(moment(checkin_date), 'days');
     
@@ -183,8 +183,11 @@ router.post('/', (req, res) => {
     }
     
     const room = db.prepare('SELECT status FROM rooms WHERE id = ?').get(room_id);
-    if (!room || room.status !== 'available') {
-      return res.status(400).json({ success: false, message: '房间不可预订' });
+    if (!room) {
+      return res.status(400).json({ success: false, message: '房间不存在' });
+    }
+    if (room.status === 'out_of_service') {
+      return res.status(400).json({ success: false, message: '房间已停用，不可预订' });
     }
     
     const bookingNo = generateBookingNo();
@@ -236,6 +239,11 @@ router.put('/:id', (req, res) => {
       const maintenanceConflicts = checkMaintenanceConflict(newRoomId, newCheckin, newCheckout);
       if (maintenanceConflicts.length > 0) {
         return res.status(400).json({ success: false, message: '该时间段房间处于维修中' });
+      }
+
+      const room = db.prepare('SELECT status FROM rooms WHERE id = ?').get(newRoomId);
+      if (room && room.status === 'out_of_service') {
+        return res.status(400).json({ success: false, message: '房间已停用，不可预订' });
       }
     }
     

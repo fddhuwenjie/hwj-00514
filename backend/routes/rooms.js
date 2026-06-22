@@ -194,7 +194,7 @@ router.get('/:id/availability', (req, res) => {
         AND (end_date IS NULL OR end_date > ?)
     `).all(req.params.id, end_date, start_date);
     
-    const isAvailable = bookings.length === 0 && maintenance.length === 0 && room.status === 'available';
+    const isAvailable = bookings.length === 0 && maintenance.length === 0 && room.status !== 'out_of_service';
     
     let price = room.base_price;
     const seasonal = db.prepare(`
