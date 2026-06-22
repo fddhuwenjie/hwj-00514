@@ -26,12 +26,26 @@ function initDatabase() {
 
     CREATE TABLE IF NOT EXISTS seasonal_prices (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      room_id INTEGER NOT NULL,
+      room_id INTEGER,
+      room_type TEXT,
       start_date TEXT NOT NULL,
       end_date TEXT NOT NULL,
       price REAL NOT NULL,
+      price_type TEXT NOT NULL DEFAULT 'seasonal',
       name TEXT,
+      apply_weekdays TEXT,
+      apply_weekend INTEGER DEFAULT 0,
+      apply_holiday INTEGER DEFAULT 0,
+      created_at TEXT DEFAULT (datetime('now','localtime')),
       FOREIGN KEY (room_id) REFERENCES rooms(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS holidays (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      date TEXT UNIQUE NOT NULL,
+      name TEXT NOT NULL,
+      type TEXT NOT NULL DEFAULT 'holiday',
+      created_at TEXT DEFAULT (datetime('now','localtime'))
     );
 
     CREATE TABLE IF NOT EXISTS cleaners (
@@ -326,6 +340,48 @@ function seedData() {
     moment().add(4, 'days').format('YYYY-MM-DD')
   );
   maintenanceCount++;
+
+  const insertHoliday = db.prepare(`
+    INSERT OR IGNORE INTO holidays (date, name, type)
+    VALUES (?, ?, ?)
+  `);
+
+  const year = moment().year();
+  const holidays = [
+    { date: `${year}-01-01`, name: '元旦', type: 'holiday' },
+    { date: `${year}-02-10`, name: '春节', type: 'holiday' },
+    { date: `${year}-02-11`, name: '春节', type: 'holiday' },
+    { date: `${year}-02-12`, name: '春节', type: 'holiday' },
+    { date: `${year}-02-13`, name: '春节', type: 'holiday' },
+    { date: `${year}-02-14`, name: '春节', type: 'holiday' },
+    { date: `${year}-02-15`, name: '春节', type: 'holiday' },
+    { date: `${year}-02-16`, name: '春节', type: 'holiday' },
+    { date: `${year}-04-04`, name: '清明节', type: 'holiday' },
+    { date: `${year}-04-05`, name: '清明节', type: 'holiday' },
+    { date: `${year}-04-06`, name: '清明节', type: 'holiday' },
+    { date: `${year}-05-01`, name: '劳动节', type: 'holiday' },
+    { date: `${year}-05-02`, name: '劳动节', type: 'holiday' },
+    { date: `${year}-05-03`, name: '劳动节', type: 'holiday' },
+    { date: `${year}-05-04`, name: '劳动节', type: 'holiday' },
+    { date: `${year}-05-05`, name: '劳动节', type: 'holiday' },
+    { date: `${year}-06-10`, name: '端午节', type: 'holiday' },
+    { date: `${year}-06-11`, name: '端午节', type: 'holiday' },
+    { date: `${year}-06-12`, name: '端午节', type: 'holiday' },
+    { date: `${year}-09-15`, name: '中秋节', type: 'holiday' },
+    { date: `${year}-09-16`, name: '中秋节', type: 'holiday' },
+    { date: `${year}-09-17`, name: '中秋节', type: 'holiday' },
+    { date: `${year}-10-01`, name: '国庆节', type: 'holiday' },
+    { date: `${year}-10-02`, name: '国庆节', type: 'holiday' },
+    { date: `${year}-10-03`, name: '国庆节', type: 'holiday' },
+    { date: `${year}-10-04`, name: '国庆节', type: 'holiday' },
+    { date: `${year}-10-05`, name: '国庆节', type: 'holiday' },
+    { date: `${year}-10-06`, name: '国庆节', type: 'holiday' },
+    { date: `${year}-10-07`, name: '国庆节', type: 'holiday' },
+  ];
+
+  holidays.forEach(h => {
+    insertHoliday.run(h.date, h.name, h.type);
+  });
 
   console.log('正在同步房间状态...');
   

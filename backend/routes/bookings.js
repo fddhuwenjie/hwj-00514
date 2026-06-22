@@ -35,8 +35,44 @@ function checkMaintenanceConflict(roomId, checkinDate, checkoutDate) {
   `).all(roomId, checkoutDate, checkinDate);
 }
 
+function getPriceForDate(roomId, roomType, basePrice, dateStr) {
+  const date = moment(dateStr);
+  const weekday = date.isoWeekday();
+  const isWeekend = weekday >= 6;
+  
+  const isHoliday = db.prepare(`
+    SELECT COUNT(*) as count FROM holidays WHERE date = ?
+  `).get(dateStr).count > 0;
+
+  const priceRule = db.prepare(`
+    SELECT * FROM seasonal_prices 
+    WHERE (room_id = ? OR room_type = ? OR (room_id IS NULL AND room_type IS NULL))
+      AND start_date <= ? 
+      AND end_date >= ?
+      AND (
+        (apply_weekend = 1 AND ? = 1) OR
+        (apply_holiday = 1 AND ? = 1) OR
+        (apply_weekdays LIKE ?) OR
+        (apply_weekend = 0 AND apply_holiday = 0 AND apply_weekdays IS NULL)
+      )
+    ORDER BY 
+      CASE WHEN room_id = ? THEN 0 
+           WHEN room_type = ? THEN 1 
+           ELSE 2 END,
+      price_type = 'temporary' DESC,
+      created_at DESC
+    LIMIT 1
+  `).get(roomId, roomType, dateStr, dateStr, isWeekend ? 1 : 0, isHoliday ? 1 : 0, `%${weekday}%`, roomId, roomType);
+
+  if (priceRule) {
+    return priceRule.price;
+  }
+
+  return basePrice;
+}
+
 function calculatePrice(roomId, checkinDate, checkoutDate) {
-  const room = db.prepare('SELECT base_price FROM rooms WHERE id = ?').get(roomId);
+  const room = db.prepare('SELECT base_price, room_type FROM rooms WHERE id = ?').get(roomId);
   if (!room) return 0;
   
   const start = moment(checkinDate);
@@ -48,19 +84,49 @@ function calculatePrice(roomId, checkinDate, checkoutDate) {
   
   for (let i = 0; i < nights; i++) {
     const dateStr = current.format('YYYY-MM-DD');
-    const seasonal = db.prepare(`
-      SELECT price FROM seasonal_prices 
-      WHERE room_id = ? 
-        AND start_date <= ? 
-        AND end_date >= ?
-      LIMIT 1
-    `).get(roomId, dateStr, dateStr);
-    
-    totalPrice += seasonal ? seasonal.price : room.base_price;
+    totalPrice += getPriceForDate(roomId, room.room_type, room.base_price, dateStr);
     current.add(1, 'day');
   }
   
   return totalPrice;
+}
+
+function calculatePriceWithDetails(roomId, checkinDate, checkoutDate) {
+  const room = db.prepare('SELECT base_price, room_type FROM rooms WHERE id = ?').get(roomId);
+  if (!room) return { total: 0, details: [], nights: 0 };
+
+  const start = moment(checkinDate);
+  const end = moment(checkoutDate);
+  const nights = end.diff(start, 'days');
+
+  let totalPrice = 0;
+  const details = [];
+  const current = start.clone();
+
+  for (let i = 0; i < nights; i++) {
+    const dateStr = current.format('YYYY-MM-DD');
+    const price = getPriceForDate(roomId, room.room_type, room.base_price, dateStr);
+    const isWeekend = current.isoWeekday() >= 6;
+    const isHoliday = db.prepare(`
+      SELECT COUNT(*) as count FROM holidays WHERE date = ?
+    `).get(dateStr).count > 0;
+
+    totalPrice += price;
+    details.push({
+      date: dateStr,
+      price: price,
+      is_holiday: isHoliday,
+      is_weekend: isWeekend,
+      weekday: current.isoWeekday()
+    });
+    current.add(1, 'day');
+  }
+
+  return {
+    total: totalPrice,
+    nights: nights,
+    details: details
+  };
 }
 
 router.get('/', (req, res) => {
@@ -144,16 +210,16 @@ router.post('/check-conflict', (req, res) => {
     const room = db.prepare('SELECT status FROM rooms WHERE id = ?').get(room_id);
     
     const hasConflict = bookingConflicts.length > 0 || maintenanceConflicts.length > 0 || (room && room.status === 'out_of_service');
-    const price = calculatePrice(room_id, checkin_date, checkout_date);
-    const nights = moment(checkout_date).diff(moment(checkin_date), 'days');
+    const priceDetails = calculatePriceWithDetails(room_id, checkin_date, checkout_date);
     
     res.json({
       success: true,
       data: {
         available: !hasConflict,
-        price: price,
-        total_price: price,
-        nights: nights,
+        price: priceDetails.total,
+        total_price: priceDetails.total,
+        nights: priceDetails.nights,
+        price_details: priceDetails.details,
         booking_conflicts: bookingConflicts,
         maintenance_conflicts: maintenanceConflicts,
         room_status: room ? room.status : null

@@ -165,6 +165,80 @@ router.delete('/seasonal-prices/:priceId', (req, res) => {
   }
 });
 
+function getPriceForDate(roomId, roomType, basePrice, dateStr) {
+  const date = moment(dateStr);
+  const weekday = date.isoWeekday();
+  const isWeekend = weekday >= 6;
+  
+  const isHoliday = db.prepare(`
+    SELECT COUNT(*) as count FROM holidays WHERE date = ?
+  `).get(dateStr).count > 0;
+
+  const priceRule = db.prepare(`
+    SELECT * FROM seasonal_prices 
+    WHERE (room_id = ? OR room_type = ? OR (room_id IS NULL AND room_type IS NULL))
+      AND start_date <= ? 
+      AND end_date >= ?
+      AND (
+        (apply_weekend = 1 AND ? = 1) OR
+        (apply_holiday = 1 AND ? = 1) OR
+        (apply_weekdays LIKE ?) OR
+        (apply_weekend = 0 AND apply_holiday = 0 AND apply_weekdays IS NULL)
+      )
+    ORDER BY 
+      CASE WHEN room_id = ? THEN 0 
+           WHEN room_type = ? THEN 1 
+           ELSE 2 END,
+      price_type = 'temporary' DESC,
+      created_at DESC
+    LIMIT 1
+  `).get(roomId, roomType, dateStr, dateStr, isWeekend ? 1 : 0, isHoliday ? 1 : 0, `%${weekday}%`, roomId, roomType);
+
+  if (priceRule) {
+    return priceRule.price;
+  }
+
+  return basePrice;
+}
+
+function calculatePriceWithDetails(roomId, checkinDate, checkoutDate) {
+  const room = db.prepare('SELECT base_price, room_type FROM rooms WHERE id = ?').get(roomId);
+  if (!room) return { total: 0, details: [], nights: 0 };
+
+  const start = moment(checkinDate);
+  const end = moment(checkoutDate);
+  const nights = end.diff(start, 'days');
+
+  let totalPrice = 0;
+  const details = [];
+  const current = start.clone();
+
+  for (let i = 0; i < nights; i++) {
+    const dateStr = current.format('YYYY-MM-DD');
+    const price = getPriceForDate(roomId, room.room_type, room.base_price, dateStr);
+    const isWeekend = current.isoWeekday() >= 6;
+    const isHoliday = db.prepare(`
+      SELECT COUNT(*) as count FROM holidays WHERE date = ?
+    `).get(dateStr).count > 0;
+
+    totalPrice += price;
+    details.push({
+      date: dateStr,
+      price: price,
+      is_holiday: isHoliday,
+      is_weekend: isWeekend,
+      weekday: current.isoWeekday()
+    });
+    current.add(1, 'day');
+  }
+
+  return {
+    total: totalPrice,
+    nights: nights,
+    details: details
+  };
+}
+
 router.get('/:id/availability', (req, res) => {
   const { start_date, end_date } = req.query;
   
@@ -196,28 +270,16 @@ router.get('/:id/availability', (req, res) => {
     
     const isAvailable = bookings.length === 0 && maintenance.length === 0 && room.status !== 'out_of_service';
     
-    let price = room.base_price;
-    const seasonal = db.prepare(`
-      SELECT * FROM seasonal_prices 
-      WHERE room_id = ? 
-        AND start_date <= ? 
-        AND end_date >= ?
-      LIMIT 1
-    `).get(req.params.id, start_date, start_date);
-    
-    if (seasonal) {
-      price = seasonal.price;
-    }
-    
-    const nights = moment(end_date).diff(moment(start_date), 'days');
+    const priceDetails = calculatePriceWithDetails(req.params.id, start_date, end_date);
     
     res.json({
       success: true,
       data: {
         available: isAvailable,
-        price: price,
-        total_price: price * nights,
-        nights: nights,
+        price: priceDetails.nights > 0 ? priceDetails.details[0].price : room.base_price,
+        total_price: priceDetails.total,
+        nights: priceDetails.nights,
+        price_details: priceDetails.details,
         conflicting_bookings: bookings,
         conflicting_maintenance: maintenance
       }

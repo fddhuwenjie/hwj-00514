@@ -63,15 +63,72 @@ router.get('/:id', (req, res) => {
   }
 });
 
+router.post('/check-conflicts', (req, res) => {
+  const { room_ids, start_date, end_date } = req.body;
+
+  if (!room_ids || !start_date || !end_date) {
+    return res.status(400).json({ success: false, message: '缺少必要参数' });
+  }
+
+  try {
+    const conflicts = [];
+    const roomIds = Array.isArray(room_ids) ? room_ids : [room_ids];
+
+    roomIds.forEach(roomId => {
+      const room = db.prepare('SELECT room_number, room_type FROM rooms WHERE id = ?').get(roomId);
+      if (!room) return;
+
+      const bookings = db.prepare(`
+        SELECT b.*, r.room_number
+        FROM bookings b
+        JOIN rooms r ON b.room_id = r.id
+        WHERE b.room_id = ?
+          AND b.status NOT IN ('cancelled')
+          AND b.checkin_date < ?
+          AND b.checkout_date > ?
+      `).all(roomId, end_date, start_date);
+
+      if (bookings.length > 0) {
+        bookings.forEach(booking => {
+          conflicts.push({
+            type: 'booking',
+            room_id: roomId,
+            room_number: room.room_number,
+            room_type: room.room_type,
+            booking_id: booking.id,
+            booking_no: booking.booking_no,
+            guest_name: booking.guest_name,
+            checkin_date: booking.checkin_date,
+            checkout_date: booking.checkout_date,
+            status: booking.status,
+            total_amount: booking.total_amount
+          });
+        });
+      }
+    });
+
+    res.json({
+      success: true,
+      data: {
+        has_conflicts: conflicts.length > 0,
+        conflicts: conflicts,
+        conflict_count: conflicts.length
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 router.post('/', (req, res) => {
-  const { room_id, title, description, start_date, end_date } = req.body;
+  const { room_id, title, description, start_date, end_date, check_conflicts } = req.body;
   
   if (!room_id || !title || !start_date) {
     return res.status(400).json({ success: false, message: '缺少必要参数' });
   }
   
   try {
-    const room = db.prepare('SELECT status FROM rooms WHERE id = ?').get(room_id);
+    const room = db.prepare('SELECT status, room_number, room_type FROM rooms WHERE id = ?').get(room_id);
     if (!room) {
       return res.status(404).json({ success: false, message: '房间不存在' });
     }
@@ -86,6 +143,40 @@ router.post('/', (req, res) => {
     
     if (conflicts.length > 0) {
       return res.status(400).json({ success: false, message: '该时间段已有维修单' });
+    }
+
+    if (check_conflicts) {
+      const bookingConflicts = db.prepare(`
+        SELECT b.*, r.room_number
+        FROM bookings b
+        JOIN rooms r ON b.room_id = r.id
+        WHERE b.room_id = ?
+          AND b.status NOT IN ('cancelled')
+          AND b.checkin_date < ?
+          AND b.checkout_date > ?
+      `).all(room_id, end_date || '9999-12-31', start_date);
+
+      if (bookingConflicts.length > 0) {
+        const conflicts = bookingConflicts.map(booking => ({
+          type: 'booking',
+          room_id: room_id,
+          room_number: room.room_number,
+          room_type: room.room_type,
+          booking_id: booking.id,
+          booking_no: booking.booking_no,
+          guest_name: booking.guest_name,
+          checkin_date: booking.checkin_date,
+          checkout_date: booking.checkout_date,
+          status: booking.status,
+          total_amount: booking.total_amount
+        }));
+
+        return res.status(400).json({
+          success: false,
+          message: '维修区间覆盖已有订单，请先处理',
+          conflicts: conflicts
+        });
+      }
     }
     
     const result = db.prepare(`

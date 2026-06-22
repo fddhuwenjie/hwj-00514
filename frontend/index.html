@@ -390,11 +390,22 @@
         <div id="page-calendar" class="page">
           <div class="page-toolbar">
             <div class="filter-group">
-              <button class="btn btn-default" onclick="changeCalendarWeek(-1)">◀ 上一周</button>
-              <button class="btn btn-default" onclick="changeCalendarWeek(1)">下一周 ▶</button>
+              <button class="btn btn-default" onclick="changeCalendarPeriod(-1)">◀ 上一期</button>
+              <button class="btn btn-default" onclick="changeCalendarPeriod(1)">下一期 ▶</button>
               <button class="btn btn-primary" onclick="goToToday()">今天</button>
+              <select id="calendar-view-type" onchange="changeCalendarView()">
+                <option value="14">14天视图</option>
+                <option value="30" selected>30天视图</option>
+              </select>
+              <select id="calendar-room-filter" onchange="loadCalendar()">
+                <option value="">全部房型</option>
+              </select>
             </div>
-            <span id="calendar-date-range" style="font-weight: bold;"></span>
+            <div class="filter-group">
+              <button class="btn btn-success" onclick="showBatchPricingModal()">💰 批量调价</button>
+              <button class="btn btn-warning" onclick="showBatchStatusModal()">⚙️ 批量房态</button>
+              <span id="calendar-date-range" style="font-weight: bold; margin-left: 10px;"></span>
+            </div>
           </div>
           <div class="legend-bar">
             <span class="legend-item"><span class="legend-color available"></span> 可订</span>
@@ -403,6 +414,8 @@
             <span class="legend-item"><span class="legend-color cleaning"></span> 待清洁</span>
             <span class="legend-item"><span class="legend-color maintenance"></span> 维修中</span>
             <span class="legend-item"><span class="legend-color out_of_service"></span> 停用</span>
+            <span class="legend-item"><span class="legend-color holiday"></span> 节假日</span>
+            <span class="legend-item"><span class="legend-color weekend"></span> 周末</span>
           </div>
           <div class="calendar-container">
             <div class="calendar-table" id="calendar-table"></div>

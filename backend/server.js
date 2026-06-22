@@ -12,6 +12,7 @@ const cleaningRoutes = require('./routes/cleaning');
 const maintenanceRoutes = require('./routes/maintenance');
 const statsRoutes = require('./routes/stats');
 const cleanerRoutes = require('./routes/cleaners');
+const calendarRoutes = require('./routes/calendar');
 
 const app = express();
 const PORT = 8514;
@@ -27,6 +28,7 @@ app.use('/api/cleaning', cleaningRoutes);
 app.use('/api/maintenance', maintenanceRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/cleaners', cleanerRoutes);
+app.use('/api/calendar', calendarRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: '民宿管理系统API运行正常' });
